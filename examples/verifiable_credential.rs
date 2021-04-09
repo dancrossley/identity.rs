@@ -21,6 +21,11 @@ use identity::iota::Client;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::prelude::*;
+use identity::iota::Network;
+use identity::iota::TangleRef;
+use std::fs::File;
+use std::io::prelude::*;
+use std::fs;
 
 // Helper that takes two DID Documents (identities) for issuer and subject, and
 // creates a credential with claims about subject by issuer.
@@ -44,6 +49,29 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
   Ok(credential)
 }
 
+// Helper that takes two DID Documents (identities) for issuer and subject, and
+// creates a credential with claims about subject by issuer.
+fn issue_vaccination(issuer: &Document, subject: &Document) -> Result<Credential> {
+  // Create VC "subject" field containing subject ID and claims about it.
+  let subject: Subject = Subject::from_json_value(json!({
+    "id": subject.id().as_str(),
+    "vaccine": {
+      "vaccine_type": "Pfizer-BioNTech",
+      "batch_id": "6EQUJ5",
+      "clinic_id": "LV-426"
+    }
+  }))?;
+
+  // Build credential using subject above and issuer.
+  let credential: Credential = CredentialBuilder::default()
+    .issuer(Url::parse(issuer.id().as_str())?)
+    .type_("VaccinationCertificate")
+    .subject(subject)
+    .build()?;
+
+  Ok(credential)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
@@ -52,11 +80,24 @@ async fn main() -> Result<()> {
   // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
   let (doc_iss, key_iss): (Document, KeyPair) = common::create_did_document(&client).await?;
 
+  // Print the DID Document IOTA transaction link for the credential issuer
+  let network: Network = doc_iss.id().into();
+  let explore: String = format!("{}/message/{}", network.explorer_url(), doc_iss.message_id());
+  println!("Credential Issuer DID Document Transaction > {}", explore);
+
   // Create a signed DID Document/KeyPair for the credential subject (see previous example).
   let (doc_sub, _key_sub): (Document, KeyPair) = common::create_did_document(&client).await?;
 
+  // Print the DID Document IOTA transaction link for the credential subject
+  let network: Network = doc_sub.id().into();
+  let explore: String = format!("{}/message/{}", network.explorer_url(), doc_sub.message_id());
+  println!("Credential Subject DID Document Transaction > {}", explore);
+
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
-  let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
+  // let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
+
+  // Create an unsigned Credential with claims about `subject` specified by `issuer`.
+  let mut credential: Credential = issue_vaccination(&doc_iss, &doc_sub)?;
 
   // Sign the Credential with the issuer secret key - the result is a Verifiable Credential.
   doc_iss.sign_data(&mut credential, key_iss.secret())?;
@@ -65,7 +106,14 @@ async fn main() -> Result<()> {
   println!();
 
   // Convert the Verifiable Credential to JSON and "exchange" with a verifier
-  let message: String = credential.to_json()?;
+  let message: String = credential.to_json()?;  
+
+  // Write the credential to a flat-file
+  //let mut file = File::create("credential.json")?;
+  //file.write_all(&message)?;
+
+  fs::write("/tmp/foo", &message).expect("Unable to write file");
+
 
   // Create a `CredentialValidator` instance that will fetch
   // and validate all associated documents from the IOTA Tangle.

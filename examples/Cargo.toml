@@ -40,3 +40,7 @@ path = "diff_chain.rs"
 [[example]]
 name = "merkle_key"
 path = "merkle_key.rs"
+
+[[example]]
+name = "validator"
+path = "validator.rs"

@@ -97,15 +97,5 @@ async fn main() -> Result<()> {
 
   fs::write("/tmp/foo", &message).expect("Unable to write file");
 
-  // Create a `CredentialValidator` instance that will fetch
-  // and validate all associated documents from the IOTA Tangle.
-  let validator: CredentialValidator = CredentialValidator::new(&client);
-
-  // Perform the validation operation.
-  let validation: CredentialValidation = validator.check(&message).await?;
-
-  println!("Credential Validation > {:#?}", validation);
-  println!();
-
   Ok(())
 }

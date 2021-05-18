@@ -43,6 +43,14 @@ name = "low_merkle_key"
 path = "low-level-api/merkle_key.rs"
 
 [[example]]
+name = "validator"
+path = "low-level-api/validator.rs"
+
+[[example]]
+name = "issue_credential"
+path = "low-level-api/issue_credential.rs"
+
+[[example]]
 name = "account_basic"
 path = "account/basic.rs"
 

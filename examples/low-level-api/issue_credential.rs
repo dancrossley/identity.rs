@@ -27,27 +27,6 @@ use std::fs;
 
 // Helper that takes two DID Documents (identities) for issuer and subject, and
 // creates a credential with claims about subject by issuer.
-fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
-  // Create VC "subject" field containing subject ID and claims about it.
-  let subject: Subject = Subject::from_json_value(json!({
-    "id": subject.id().as_str(),
-    "degree": {
-      "type": "BachelorDegree",
-      "name": "Bachelor of Science and Arts"
-    }
-  }))?;
-
-  // Build credential using subject above and issuer.
-  let credential: Credential = CredentialBuilder::default()
-    .issuer(Url::parse(issuer.id().as_str())?)
-    .type_("UniversityDegreeCredential")
-    .subject(subject)
-    .build()?;
-
-  Ok(credential)
-}
-// Helper that takes two DID Documents (identities) for issuer and subject, and
-// creates a credential with claims about subject by issuer.
 fn issue_vaccination(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
@@ -80,9 +59,6 @@ async fn main() -> Result<()> {
   // Create a signed DID Document/KeyPair for the credential subject (see previous example).
   let (doc_sub, _key_sub): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
 
-  // Create an unsigned Credential with claims about `subject` specified by `issuer`.
-  let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
-  
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = issue_vaccination(&doc_iss, &doc_sub)?;
 
